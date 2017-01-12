@@ -26,7 +26,7 @@ make_cloud_init <- function(pubkey_path=NULL, usr="ruser"){
   tb <- "  "                                        # tab spacing to keep essential formatting
 
   ## break into chunks and handle individually
-  index <- which(str_detect(ci_template, "^ *$"))
+  index <- which(str_detect(ci_template, "^#--$"))
   chunks <- easydata::split_by_index(ci_template, index, include_at_index = FALSE)
 
   ##
@@ -81,8 +81,10 @@ make_cloud_init <- function(pubkey_path=NULL, usr="ruser"){
 
   # Add calls to the write files
   cfile <- c(result[-length(result)],
-                  paste0(tb, "- Rscript --vanilla /inst_standard_packs.R > ins_standard_packs_log"),
-                  paste0(tb, "- Rscript --vanilla /post_pubkey.R > post_pubkey_log"), "")
+             paste0(tb, "- Rscript --vanilla /inst_standard_packs.R > ins_standard_packs_log"),
+             paste0(tb, "- Rscript --vanilla /post_pubkey.R > post_pubkey_log"),
+             chunks[[6]],
+             "")
 
   # print result on console for easy copy and paste
   # modify later to return so that R can launch
