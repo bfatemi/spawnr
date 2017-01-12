@@ -1,9 +1,31 @@
-library(easydata)
-library(data.table)
-library(stringr)
-
-
+#' Generate Cloud-Init File
 #'
+#' Function to generate a cloud-init file that can be used along with the digitalocean API
+#' to fully launch and depeloy a full scale R environment. This function also references
+#' files within this package that can be customized. These files are run on init, and include
+#' an R script to install basic packages, and another file that can contain arbitrary code to run.
+#'
+#' @param pubkey_path Path to .ssh file in the system that has entries for the public key
+#'
+#' @return Prints cloud-init file on console to use with DigitalOceans web UI to launch server
+#'
+#' @import stringr
+#' @import data.table
+#' @import easydata
+#'
+#' @examples
+#' # Not tested for systems other than windows
+#' # To ensure public key is correct, you can run this to see:
+#' read_pubkey()
+#'
+#' #otherwise, the following function call will print the cloud init file on console
+#' make_cloud_init()
+#' @name make_cloud
+NULL
+
+
+#' @describeIn make_cloud Helper function that returns public key stored on local system
+#' @export
 read_pubkey <- function(pubkey_path=NULL){
   if(is.null(pubkey_path)){
     dr <- Sys.getenv("HOMEDRIVE")
@@ -19,6 +41,8 @@ read_pubkey <- function(pubkey_path=NULL){
   return(pubkey)
 }
 
+#' @describeIn make_cloud Generates cloud_init file on console for now.
+#' @export
 make_cloud_init <- function(pubkey_path=NULL, usr="ruser"){
 
   ## Construct cloud init file
