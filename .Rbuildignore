@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^old$
+^R/development$
+^R/old$
+^private$
+^data-raw$

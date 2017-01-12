@@ -1,0 +1,13 @@
+Package: spawnr
+Title: Spawn R Server in the Cloud
+Version: 0.0.0.9000
+Authors@R: person("Bobby", "Fatemi", email = "bfatemi07@gmail.com", role = c("aut", "cre"))
+Description: Package to launch an R cloud server.
+Depends:
+    R (>= 3.3.2)
+License: file LICENSE
+Encoding: UTF-8
+LazyData: true
+Suggests:
+    testthat
+RoxygenNote: 5.0.1
