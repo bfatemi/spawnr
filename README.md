@@ -1,4 +1,4 @@
-# spawnr
+# spawnr [![Travis-CI Build Status](https://travis-ci.com/bfatemi/spawnr.svg?token=pYv3R1FRGogyEqfAKVfU&branch=master)](https://travis-ci.com/bfatemi/spawnr)
 
 The goal of spawnr is to ...
 

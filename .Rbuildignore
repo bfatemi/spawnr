@@ -5,3 +5,4 @@
 ^R/old$
 ^private$
 ^data-raw$
+^\.travis\.yml$
