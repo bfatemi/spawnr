@@ -1,4 +1,4 @@
-library(testthat)
-library(spawnr)
+# library(testthat)
+# library(spawnr)
 
-test_check("spawnr")
+# test_check("spawnr")

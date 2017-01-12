@@ -6,6 +6,7 @@
 #' an R script to install basic packages, and another file that can contain arbitrary code to run.
 #'
 #' @param pubkey_path Path to .ssh file in the system that has entries for the public key
+#' @param usr A string of length one naming the user to create on the server at launch. Defaults to 'ruser'
 #'
 #' @return Prints cloud-init file on console to use with DigitalOceans web UI to launch server
 #'
@@ -23,7 +24,6 @@
 #' @name make_cloud
 NULL
 
-
 #' @describeIn make_cloud Helper function that returns public key stored on local system
 #' @export
 read_pubkey <- function(pubkey_path=NULL){
@@ -35,7 +35,8 @@ read_pubkey <- function(pubkey_path=NULL){
     tryCatch({
       pubkey <- readLines(pubkey_path)
     }, error=function(c){
-      stop("Issue reading public key. Check path and if wrong, provide pubkey via arg:\n", path)
+      stop("Issue reading public key.
+           Check path and if wrong, provide pubkey via arg:\n", pubkey_path)
     })
   }
   return(pubkey)
@@ -47,9 +48,10 @@ make_cloud_init <- function(pubkey_path=NULL, usr="ruser"){
 
   ## Construct cloud init file
   ##
-  ci_template <- readLines("inst/ext/template.yml") # template stored in package folder
-  pubkey <- read_pubkey(pubkey_path)                # read public key
-  tb <- "  "                                        # tab spacing to keep essential formatting
+  tpath <- system.file("ext", "template.yml", package = "spawnr")
+  ci_template <- readLines(tpath)     # template stored in package folder
+  pubkey <- read_pubkey(pubkey_path)  # read public key
+  tb <- "  "                          # tab spacing to keep essential formatting
 
   ## break into chunks and handle individually
   index <- which(str_detect(ci_template, "^#--$"))
@@ -82,10 +84,11 @@ make_cloud_init <- function(pubkey_path=NULL, usr="ruser"){
   wfp <- writefiles[2]
   wfc <- writefiles[3]
 
-  dpath <- "inst/ext/install_scripts/"
+  dpath <- paste0(system.file("ext", "install_scripts", package = "spawnr"), "/")
   fn1 <- "install_rstudio_ocpu.sh"
   fn2 <- "install_packages.R"
   fn3 <- "run_on_server.R"
+
   c1 <- readLines(paste0(dpath, fn1))
   c2 <- readLines(paste0(dpath, fn2))
   c3 <- readLines(paste0(dpath, fn3))

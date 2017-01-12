@@ -12,6 +12,8 @@ make_cloud_init(pubkey_path = NULL, usr = "ruser")
 }
 \arguments{
 \item{pubkey_path}{Path to .ssh file in the system that has entries for the public key}
+
+\item{usr}{A string of length one naming the user to create on the server at launch. Defaults to 'ruser'}
 }
 \value{
 Prints cloud-init file on console to use with DigitalOceans web UI to launch server
