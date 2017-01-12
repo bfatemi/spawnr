@@ -1,0 +1,41 @@
+#cloud-config
+users:
+  - name: ruser
+    groups: sudo
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJDhWvg4pC29f0YZ5z4ZMEIJQdDKj6i5NwY3PVzeOYfRkFDnnSFn07LoJyPxbULcehlEwqksbx9wKdjyaOYo0s6fTe6KFIlakCzkEgRH0OcriPsK5k3BpKmLSMFR7YTTrzWf3tl3gzxbOhUP8f+qBZ1Pfk66UKR5942ox522YQ92hPkhObnZJYvSjorPoRlWnDTVozOky7XAxP646TWGkuzwBx+iAtAW0ZLqEjTMfVa0IzpAR0zxxGww0CuNwDp708tOIM41lMkWbEQ+XOiw6QRenNgKwWaWDMRMdlJDqYXqkhu71C7gnnMyTtcMKJZLRKr3O57H77H1yIswomSJPp Bobby Fatemi@DESKTOP-D807V7J
+    shell: /bin/bash
+package_upgrade: true
+packages:
+  - apache2
+  - build-essential
+  - libxml2-dev
+  - libcurl4-openssl-dev
+write_files:
+  - path: /mysetup.R
+    content: |
+      pkgs <- c("httr", "data.table", "devtools", "stringr", "lubridate", "pryr", "roxygen", "testthat")
+      rep <- "http://cran.rstudio.com/"
+      do.call(install.packages, list(pkgs, .Library, repos=rep))
+  - path: /silent-install-ocpu.sh
+    content: |
+      sudo debconf-set-selections <<< "postfix postfix/mailname string hpds.io"
+      sudo debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
+      sudo apt-get install -y postfix
+      sudo apt-get install -y opencpu
+      sudo apt-get install -y rstudio-server
+      sudo rstudio-server restart
+runcmd:
+  - 'echo ruser:Newyork1 | chpasswd'
+  - 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | sudo tee -a /etc/apt/sources.list'
+  - gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
+  - gpg -a --export E084DAB9 | sudo apt-key add -
+  - sudo add-apt-repository -y ppa:opencpu/opencpu-1.6
+  - sudo apt-get update -y
+  - sudo apt-get install -y r-base-dev
+  - chmod +x /silent-install-ocpu.sh
+  - /silent-install-ocpu.sh
+
+
+
