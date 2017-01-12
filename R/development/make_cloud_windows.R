@@ -2,6 +2,8 @@ library(easydata)
 library(data.table)
 library(stringr)
 
+
+#'
 read_pubkey <- function(pubkey_path=NULL){
   if(is.null(pubkey_path)){
     dr <- Sys.getenv("HOMEDRIVE")
@@ -57,9 +59,9 @@ make_cloud_init <- function(pubkey_path=NULL, usr="ruser"){
   wfc <- writefiles[3]
 
   dpath <- "inst/ext/install_scripts/"
-  fn1 <- "silent-install-ocpu.sh"
-  fn2 <- "inst_standard_packs.R"
-  fn3 <- "post_pubkey.R"
+  fn1 <- "install_rstudio_ocpu.sh"
+  fn2 <- "install_packages.R"
+  fn3 <- "run_on_server.R"
   c1 <- readLines(paste0(dpath, fn1))
   c2 <- readLines(paste0(dpath, fn2))
   c3 <- readLines(paste0(dpath, fn3))
@@ -81,8 +83,8 @@ make_cloud_init <- function(pubkey_path=NULL, usr="ruser"){
 
   # Add calls to the write files
   cfile <- c(result[-length(result)],
-             paste0(tb, "- Rscript --vanilla /inst_standard_packs.R > ins_standard_packs_log"),
-             paste0(tb, "- Rscript --vanilla /post_pubkey.R > post_pubkey_log"),
+             paste0(tb, "- Rscript --vanilla /install_packages.R > ins_standard_packs_log"),
+             paste0(tb, "- Rscript --vanilla /run_on_server.R > post_pubkey_log"),
              chunks[[6]],
              "")
 
