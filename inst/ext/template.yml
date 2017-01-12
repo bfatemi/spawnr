@@ -1,3 +1,5 @@
+## NOTE KEEP SPACING BETWEEN CHUNKS
+##
 #cloud-config
 users:
   - name:
@@ -5,11 +7,15 @@ users:
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     shell: /bin/bash
     ssh-authorized-keys:
+#--
 package_upgrade: true
+#--
 packages:
+#--
 write_files:
   - path:
     content: |
+#--
 runcmd:
   - 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | sudo tee -a /etc/apt/sources.list'
   - gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
@@ -20,4 +26,10 @@ runcmd:
   - sudo apt-get install -y libssl-dev libcurl4-gnutls-dev libssh2-1-dev
   - sudo chmod +x /silent-install-ocpu.sh
   - sudo /silent-install-ocpu.sh
-
+#--
+power_state:
+ mode: reboot
+ message: Bye Bye
+ timeout: 30
+ condition: True
+#--

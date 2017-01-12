@@ -1,65 +1,91 @@
-make_cloud_init <- function(pubkey=NULL, username="ruser"){
-  if(is.null(pubkey)){
-    path <- paste0(Sys.getenv("HOMEDRIVE"), Sys.getenv("HOMEPATH"), "\\.ssh\\id_rsa.pub")
+library(easydata)
+library(data.table)
+library(stringr)
+
+read_pubkey <- function(pubkey_path=NULL){
+  if(is.null(pubkey_path)){
+    dr <- Sys.getenv("HOMEDRIVE")
+    hp <- Sys.getenv("HOMEPATH")
+    pk <- "\\.ssh\\id_rsa.pub"
+    pubkey_path <- paste0(dr, hp, pk)
     tryCatch({
-      pubkey <- readLines(path)
+      pubkey <- readLines(pubkey_path)
     }, error=function(c){
       stop("Issue reading public key. Check path and if wrong, provide pubkey via arg:\n", path)
     })
   }
+  return(pubkey)
+}
+
+make_cloud_init <- function(pubkey_path=NULL, usr="ruser"){
 
   ## Construct cloud init file
   ##
-  tmp <- readLines("inst/ext/template.yml")
-  tb <- "  "
+  ci_template <- readLines("inst/ext/template.yml") # template stored in package folder
+  pubkey <- read_pubkey(pubkey_path)                # read public key
+  tb <- "  "                                        # tab spacing to keep essential formatting
 
-  # username
-  ind <- which(str_detect(tmp, paste0(tb, "- name:")))
-  tmp[ind] <- paste0(tmp[ind], " ", username)
+  ## break into chunks and handle individually
+  index <- which(str_detect(ci_template, "^ *$"))
+  chunks <- easydata::split_by_index(ci_template, index, include_at_index = FALSE)
 
-  # public key
-  ind <- which(str_detect(tmp, "ssh-authorized-keys:"))
-  tmp2 <- c(tmp[1:(ind-1)],
-            c(tmp[ind], paste0(tb, tb,tb, "- ", pubkey)),
-            tmp[(ind+1):length(tmp)])
+  ##
+  ## Username & public key
+  ##
+  user <- chunks[[1]][-1]
+  ind <- which(str_detect(user, paste0(tb, "- name:")))
+  user[ind] <- paste0(user[ind], " ", usr)
 
-  # packages
-  packs <- c("apache2",
-             "build-essential",
-             "libxml2-dev",
-             "libcurl4-openssl-dev")
-  ind <- which(str_detect(tmp2, "packages:"))
-  tmp3 <- c(tmp2[1:(ind-1)],
-            c("packages:", paste0(paste0(tb, "- ", collapse = ""), packs)),
-            tmp2[(ind+1):length(tmp2)])
+  ind <- which(str_detect(user, "ssh-authorized-keys:"))
+  user <- c(user[1:(ind-1)], c(user[ind], paste0(tb, tb,tb, "- ", pubkey)))
 
-  # write files
-  ind <- which(str_detect(tmp3, "write_files:"))
-  ind.block <- c(ind, ind+1, ind+2)
+  if((ind+1)<length(user))
+    user <- c(user, user[(ind+1):length(user)])
+
+  ##
+  ## packages
+  ##
+  packages <- chunks[which(str_detect(chunks, "packages:"))][[1]]
+  pkgs <- c("apache2", "build-essential", "libxml2-dev", "libcurl4-openssl-dev")
+  packages <- c(packages, paste0(paste0(tb, "- ", collapse = ""), pkgs))
+
+  ##
+  ## write files
+  ##
+  writefiles <- chunks[which(str_detect(chunks, "write_files:"))][[1]]
+  wfp <- writefiles[2]
+  wfc <- writefiles[3]
 
   dpath <- "inst/ext/install_scripts/"
-  fname_a <- "silent-install-ocpu.sh"
-  fname_b <- "inst_standard_packs.R"
-  fname_c <- "post_pubkey.R"
-  file.a <- readLines(paste0(dpath, fname_a))
-  file.b <- readLines(paste0(dpath, fname_b))
-  file.c <- readLines(paste0(dpath, fname_c))
+  fn1 <- "silent-install-ocpu.sh"
+  fn2 <- "inst_standard_packs.R"
+  fn3 <- "post_pubkey.R"
+  c1 <- readLines(paste0(dpath, fn1))
+  c2 <- readLines(paste0(dpath, fn2))
+  c3 <- readLines(paste0(dpath, fn3))
 
-  k <- paste0(tb, tb, tb, collapse = "")
+  TB <- paste0(tb, tb, tb, collapse = "")
+  block1 <- c(paste0(wfp, " /", fn1), c(wfc, paste0(TB, c1)))
+  block2 <- c(paste0(wfp, " /", fn2), c(wfc, paste0(TB, c2)))
+  block3 <- c(paste0(wfp, " /", fn3), c(wfc, paste0(TB, c3)))
 
-  block_a <- c(paste0(tmp3[ind + 1], " /", fname_a), c(tmp3[ind + 2], paste0(k, file.a)))
-  block_b <- c(paste0(tmp3[ind + 1], " /", fname_b), c(tmp3[ind + 2], paste0(k, file.b)))
-  block_c <- c(paste0(tmp3[ind + 1], " /", fname_c), c(tmp3[ind + 2], paste0(k, file.c)))
+  writefiles <- c(writefiles[1], block1, block2, block3)
 
-  all_blocks <- c(tmp3[ind], block_a, block_b, block_c)
-  tmp4 <- c(tmp3[1:(ind-1)], all_blocks, tmp3[(ind.block[length(ind.block)] + 1):length(tmp3)])
+  ###
+  ### MERGE ALL TOGETHER
+  ###
+  result <- c(user, chunks[[2]], packages, writefiles, chunks[[5]])
 
   # Ensure there is a final new line
-  if(tmp4[length(tmp4)] != "")
-    tmp4 <- c(tmp4, "")
-  cloud_file <- c(tmp4[-length(tmp4)],
+  if(result[length(result)] != "") result <- c(result, "")
+
+  # Add calls to the write files
+  cfile <- c(result[-length(result)],
                   paste0(tb, "- Rscript --vanilla /inst_standard_packs.R > ins_standard_packs_log"),
-                  paste0(tb, "- Rscript --vanilla /post_pubkey.R > post_pubkey_log"), "\n")
-  writeLines(cloud_file)
+                  paste0(tb, "- Rscript --vanilla /post_pubkey.R > post_pubkey_log"), "")
+
+  # print result on console for easy copy and paste
+  # modify later to return so that R can launch
+  writeLines(cfile)
 }
 
