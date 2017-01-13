@@ -4,7 +4,7 @@ users:
     groups: sudo
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     ssh-authorized-keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJDhWvg4pC29f0YZ5z4ZMEIJQdDKj6i5NwY3PVzeOYfRkFDnnSFn07LoJyPxbULcehlEwqksbx9wKdjyaOYo0s6fTe6KFIlakCzkEgRH0OcriPsK5k3BpKmLSMFR7YTTrzWf3tl3gzxbOhUP8f+qBZ1Pfk66UKR5942ox522YQ92hPkhObnZJYvSjorPoRlWnDTVozOky7XAxP646TWGkuzwBx+iAtAW0ZLqEjTMfVa0IzpAR0zxxGww0CuNwDp708tOIM41lMkWbEQ+XOiw6QRenNgKwWaWDMRMdlJDqYXqkhu71C7gnnMyTtcMKJZLRKr3O57H77H1yIswomSJPp Bobby Fatemi@DESKTOP-D807V7J
+      - ssh-rsa AA...
     shell: /bin/bash
 package_upgrade: true
 packages:
