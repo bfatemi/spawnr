@@ -13,21 +13,20 @@
 #'
 #' If \code{usr} is not provided, default username is 'ruser', and password is not set (for now)
 #'
-#' If \code{ghpat} is not provided, the default behavior is to use the system env variable GITHUB_PAT. One of these is required.
+#' If \code{GITHUB_PAT} is not provided as part of \code{...}, the default behavior is to use Sys.getenv.
 #'
 #' @param pubkey_path Path to .ssh file in the system that has entries for the public key
 #' @param usr A string of length one naming the user to create on the server at launch. Defaults to 'ruser'
-#' @param ghpat An optional character vector of length one, giving the github personal access token.
 #' @param init_rfiles An optional character vector naming R files that should be run on the server to
 #'              setup the environment. See details for important information regarding parameter.
-#'
+#' @param ... Optional named arguments representing server env vars to set on boot
 #' @return Prints cloud-init file on console to use with DigitalOceans web UI to launch server
 #'
 #' @import stringr
 #' @import data.table
 #' @import easydata
 #' @import utils
-#'
+#' @importFrom pryr named_dots
 #' @examples
 #' ## Not tested for systems other than windows
 #'
@@ -40,7 +39,7 @@
 #' # Create cloud init file
 #' pat <- "[PLACEHOLDER]"
 #' rfile <- "init_server.R"
-#' make_cloud_init(ghpat = pat, init_rfiles = rfile)
+#' make_cloud_init(GITHUB_PAT = pat, init_rfiles = rfile)
 #'
 #'
 #' ## DEVELOPMENT - INTERNAL USE
@@ -58,21 +57,32 @@ NULL
 
 #' @describeIn make_cloud_init Generates cloud_init file on console for now.
 #' @export
-make_cloud_init <- function(pubkey_path=NULL, usr=NULL, ghpat = NULL, init_rfiles=NULL){
-  if(is.null(usr)) usr <- "ruser" # set username if null
+make_cloud_init <- function(pubkey_path=NULL, usr=NULL, init_rfiles=NULL, ...){
+  env.vars <- pryr::named_dots(...)
+  if(is.null(usr))
+    usr <- "ruser" # set username if null
 
   ## Add boot chunk since it uses environmental variable
+  ##   - if R_PROFILE path not included, add it to the list of vars to set
   ##
-  if(is.null(ghpat))
-    ghpat <- Sys.getenv("GITHUB_PAT")
-  if(ghpat == "")
-    stop("Need either ghpat as argument or GITHUB_PAT set as system variable.")
-  patoken <- do.call(substitute, list(ghpat))
-  on_boot <- list(bootcmd = c("bootcmd:", paste0("  - cat 'GITHUB_PAT=",
-                                                 patoken, "' > /etc/environment")))
+  if(!"GITHUB_PAT" %in% names(env.vars)){
+    tmp <- Sys.getenv("GITHUB_PAT")
+    if(tmp == "")
+      stop("Need either ghpat as argument or GITHUB_PAT set as system variable.")
+    env.vars <- c(env.vars, list(GITHUB_PAT = tmp))
+  }
+  if(!"R_PROFILE" %in% names(env.vars))
+    env.vars <- c(env.vars, list(R_PROFILE = "/usr/lib/R/etc/.Rprofile"))
+
+  if(any(!str_detect(names(env.vars), "^[A-Za-z_]+$"))){
+    stop("Invalid var name...
+         Ensure environ vars are named with chars or _ only")
+  }
+
   ## Construct cloud init file
   ##
   tmp <- get_template()
+  on_boot <- list(bootcmd = do.call(get_onboot_vars, env.vars))
   chunks <- c(tmp[names(tmp) == "header"], on_boot, tmp[names(tmp) != "header"])
 
   ## Username & public key
@@ -198,5 +208,17 @@ get_inst_lines <- function(init_rfiles=NULL){
   return(lines)
 }
 
-
+#' @describeIn make_cloud_init Helper fn to construct the bootcmd chunk with env vars
+#' @export
+get_onboot_vars <- function(...){
+  args <- list(...)
+  if(length(args)==0)
+    return(NULL)
+  tmp <- as.character(mapply(function(x, i) paste0(x, "=", i),
+                             names(args),
+                             args,
+                             SIMPLIFY = TRUE))
+  res <- c("bootcmd:", paste0("  - echo '", tmp, "' >> /etc/environment"))
+  return(res)
+}
 
