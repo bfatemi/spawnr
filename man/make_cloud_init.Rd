@@ -65,6 +65,7 @@ If \code{GITHUB_PAT} is not provided as part of \code{...}, the default behavior
 \item \code{get_onboot_vars}: Helper fn to construct the bootcmd chunk with env vars
 }}
 \examples{
+\dontrun{
 ## Not tested for systems other than windows
 
 # To ensure public key is correct, you can run this to see:
@@ -88,6 +89,6 @@ make_cloud_init(GITHUB_PAT = pat, init_rfiles = rfile)
 
 # get_wfchunk(NULL) # makes wf chunk NULL
 # get_wfchunk("BLAH") # create empty file on server
-
+}
 }
 

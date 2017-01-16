@@ -1,0 +1,78 @@
+#cloud-config
+bootcmd:
+  - echo 'GITHUB_PAT=018ec6a3d3927f773a0d1b0adf516fa36b300929' >> /etc/environment
+  - echo 'R_PROFILE=/usr/lib/R/etc/.Rprofile' >> /etc/environment
+users:
+  - name: ruser
+    groups: sudo
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJDhWvg4pC29f0YZ5z4ZMEIJQdDKj6i5NwY3PVzeOYfRkFDnnSFn07LoJyPxbULcehlEwqksbx9wKdjyaOYo0s6fTe6KFIlakCzkEgRH0OcriPsK5k3BpKmLSMFR7YTTrzWf3tl3gzxbOhUP8f+qBZ1Pfk66UKR5942ox522YQ92hPkhObnZJYvSjorPoRlWnDTVozOky7XAxP646TWGkuzwBx+iAtAW0ZLqEjTMfVa0IzpAR0zxxGww0CuNwDp708tOIM41lMkWbEQ+XOiw6QRenNgKwWaWDMRMdlJDqYXqkhu71C7gnnMyTtcMKJZLRKr3O57H77H1yIswomSJPp Bobby Fatemi@DESKTOP-D807V7J
+package_upgrade: true
+packages:
+  - apache2
+  - build-essential
+  - libxml2-dev
+  - libcurl4-openssl-dev
+write_files:
+  - path: /install_rstudio_ocpu.sh
+    content: |
+      #!/bin/bash
+      sudo debconf-set-selections <<< "postfix postfix/mailname string hpds.io"
+      sudo debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
+      sudo apt-get install -y postfix
+      sudo apt-get install -y opencpu
+      sudo apt-get install -y rstudio-server
+      sudo rstudio-server restart
+  - path: /init_server.R
+    content: |
+      tryCatch({
+        pkgs <- c('data.table')
+        rep <- 'http://cran.rstudio.com/'
+        do.call(install.packages, list(pkgs, .Library, repos=rep))
+      }, error = function(c){
+        stop("\n\nError installing default packages... ", c$message)
+      })
+      tryCatch({
+        pkgs.gh <- c('bfatemi/ninjar', 'bfatemi/easydata', 'bfatemi/spawnr')
+        lapply(pkgs.gh, devtools::install_github)
+      }, error = function(c){
+        stop("\n\nError installing github packages... ", c$message)
+      })
+      library(data.table)
+      library(devtools)
+      library(httr)
+      library(stringr)
+      library(spawnr)
+      bres <- TRUE
+      pkgs <- c("data.table", "stringr")
+      tryCatch({
+        bres <<- set_default_pkgs(pkgs)
+      }, error = function(c){
+        stop("set_default_pkgs failed (did not return boolean as expected)...Here is the error: ", c$message)
+      })
+      if(bres == FALSE)
+        stop("set_default_pkgs ran with no errors but returned FALSE. Stopping execution")
+      tryCatch({
+        bres <<- connect_github()
+      }, error = function(c){
+        stop("connect_github failed (did not return boolean as expected)... Here is the error: ", c$message)
+      })
+      if(bres == FALSE)
+        stop("connect_github ran with no errors but returned FALSE. Stopping execution")
+runcmd:
+  - 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | sudo tee -a /etc/apt/sources.list'
+  - gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
+  - gpg -a --export E084DAB9 | sudo apt-key add -
+  - sudo add-apt-repository -y ppa:opencpu/opencpu-1.6
+  - sudo apt-get update -y
+  - sudo apt-get install -y r-base r-base-dev libssl-dev libcurl4-gnutls-dev libssh2-1-dev
+  - sudo chmod +x /install_rstudio_ocpu.sh
+  - sudo /install_rstudio_ocpu.sh
+  - Rscript --vanilla /init_server.R > R_init_server_log
+power_state:
+ mode: reboot
+ message: Bye Bye
+ timeout: 30
+ condition: True

@@ -28,6 +28,7 @@
 #' @import utils
 #' @importFrom pryr named_dots
 #' @examples
+#' \dontrun{
 #' ## Not tested for systems other than windows
 #'
 #' # To ensure public key is correct, you can run this to see:
@@ -51,7 +52,7 @@
 #'
 #' # get_wfchunk(NULL) # makes wf chunk NULL
 #' # get_wfchunk("BLAH") # create empty file on server
-#'
+#' }
 #' @name make_cloud_init
 NULL
 
@@ -61,6 +62,16 @@ make_cloud_init <- function(pubkey_path=NULL, usr=NULL, init_rfiles=NULL, ...){
   env.vars <- pryr::named_dots(...)
   if(is.null(usr))
     usr <- "ruser" # set username if null
+
+  # if init_files is not explicitly provided, search the install_scripts directory for .R
+  # and use those files. install_scripts dir is intended on storing all files required for
+  # initialization
+  if(is.null(init_rfiles)){
+    ifiles <- list.files(system.file("ext", "install_scripts", package = "spawnr"))
+    ind <- which(stringr::str_detect(ifiles, "^.+\\.R$"))
+    if(length(ind) > 0)
+      init_rfiles <- ifiles[ind]
+  }
 
   ## Add boot chunk since it uses environmental variable
   ##   - if R_PROFILE path not included, add it to the list of vars to set
@@ -118,25 +129,41 @@ make_cloud_init <- function(pubkey_path=NULL, usr=NULL, init_rfiles=NULL, ...){
   ### MERGE ALL TOGETHER & PRINT
   ###   - Integrate later with DO api
   merged <- unlist(lapply(1:length(chunks), function(i) do.call("[[", list(chunks, i))))
+
+  if(rstudioapi::isAvailable()){
+    if(!dir.exists("inst/log")){
+      dir.create("inst/log")
+    }
+    if(!file.exists("inst/log/cloud-init.yml")){
+      file.create("inst/log/cloud-init.yml")
+    }
+    writeLines(merged, "inst/log/cloud-init.yml")
+    rstudioapi::navigateToFile("inst/log/cloud-init.yml")
+    return(TRUE)
+  }
   writeLines(merged)
+  return(TRUE)
 }
 
 
 #' @describeIn make_cloud_init Helper function that returns public key stored on local system
 #' @export
 read_pubkey <- function(pubkey_path=NULL){
+
   if(is.null(pubkey_path)){
+
     dr <- Sys.getenv("HOMEDRIVE")
     hp <- Sys.getenv("HOMEPATH")
     pk <- "\\.ssh\\id_rsa.pub"
     pubkey_path <- paste0(dr, hp, pk)
+
     tryCatch({
       pubkey <- readLines(pubkey_path)
     }, error=function(c){
       stop("Issue reading public key.
            Check path and if wrong, provide pubkey via arg:\n", pubkey_path)
     })
-    }
+  }
   return(pubkey)
 }
 
@@ -221,4 +248,6 @@ get_onboot_vars <- function(...){
   res <- c("bootcmd:", paste0("  - echo '", tmp, "' >> /etc/environment"))
   return(res)
 }
+
+
 

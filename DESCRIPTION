@@ -16,6 +16,9 @@ Imports: data.table,
     stats,
     httr,
     pryr,
-    easydata
+    easydata,
+    shiny,
+    miniUI,
+    rstudioapi
 Remotes:
     bfatemi/easydata
