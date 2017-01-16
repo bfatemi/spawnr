@@ -10,7 +10,7 @@ set_default_pkgs <- function(pkgs = NULL){
   if(is.null(pkgs)) return(NULL)
 
   # get path to .Rprofile & read in lines
-  tmp <- "/.Rprofile"
+  tmp <- "/local/.Rprofile"
   rdir <- paste0(R.home(component = "home"), "/etc")
   outPath <- paste0(rdir, tmp)
 
