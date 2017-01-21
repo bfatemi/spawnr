@@ -19,6 +19,8 @@ Imports: data.table,
     easydata,
     shiny,
     miniUI,
-    rstudioapi
+    rstudioapi,
+    jsonlite,
+    R6
 Remotes:
     bfatemi/easydata
