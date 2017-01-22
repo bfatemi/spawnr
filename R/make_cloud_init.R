@@ -148,45 +148,37 @@ make_cloud_init <- function(pubkey_path=NULL, usr=NULL, init_rfiles=NULL, ...){
 
 #' @describeIn make_cloud_init Helper function that returns public key stored on local system
 #' @export
-read_pubkey <- function(pubkey_path=NULL){
-
+get_pubkey <- function(pubkey_path=NULL){
   if(is.null(pubkey_path)){
-
     dr <- Sys.getenv("HOMEDRIVE")
     hp <- Sys.getenv("HOMEPATH")
     pk <- "\\.ssh\\id_rsa.pub"
     pubkey_path <- paste0(dr, hp, pk)
-
     tryCatch({
-      pubkey <- readLines(pubkey_path)
+      return(readLines(pubkey_path))
     }, error=function(c){
-      stop("Issue reading public key.
-           Check path and if wrong, provide pubkey via arg:\n", pubkey_path)
+      stop("Issue reading public key. Check path and if wrong, provide pubkey via arg:\n", pubkey_path)
     })
   }
-  return(pubkey)
 }
+read_pubkey <- get_pubkey
 
 #' @describeIn make_cloud_init Helper function that returns public key stored on local system
 #' @export
 get_template <- function(){
-  tpath <- system.file("ext", "template.yml", package = "spawnr")
-  ci_template <- readLines(tpath)     # template stored in package folder
-
   ## break template into named list elements
-  index <- which(stringr::str_detect(ci_template, "^#--$"))
-  tmp <- easydata::split_by_index(ci_template, index, include_at_index = FALSE)
-  lnames <- sapply(tmp, function(i) stringr::str_extract(i[1], "^[^: \\n]+"))
-
-  # change name to something more general for header entry
-  lnames[stringr::str_detect(lnames, "#cloud-config$")] <- "header"
-
-  # drop extra comment lines
-  keepInd <- !stringr::str_detect(lnames, "^##$")
-  result <- tmp[keepInd]
-  names(result) <- lnames[keepInd]
+  tpath <- system.file("ext", "template.yml", package = "spawnr")                   # find file path
+  ci_template <- readLines(tpath)                                                   # read in template contents
+  ct <- ci_template[!stringr::str_detect(ci_template, "^##.+$")]                    # remove comments
+  index <- which(stringr::str_detect(ct, "^#--$"))                                  # identify position of each block
+  result <- easydata::split_by_index(ct, index, include_at_index = FALSE)           # split into list of blocks
+  lnames <- sapply(result, function(i) stringr::str_extract(i[1], "^[^: \\n]+"))    # extract block var name and set as list element name
+  lnames[stringr::str_detect(lnames, "#cloud-config$")] <- "header"                 # change name to 'header' for first element
+  names(result) <- lnames                                                           # set name and return list
   result
 }
+
+
 
 #' @describeIn make_cloud_init Helper function that constructs the write_files block in cloud-init
 #' @export

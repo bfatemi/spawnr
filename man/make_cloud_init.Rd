@@ -3,15 +3,15 @@
 \name{make_cloud_init}
 \alias{get_inst_lines}
 \alias{get_onboot_vars}
+\alias{get_pubkey}
 \alias{get_template}
 \alias{get_wfchunk}
 \alias{make_cloud_init}
-\alias{read_pubkey}
 \title{Generate Cloud-Init File}
 \usage{
 make_cloud_init(pubkey_path = NULL, usr = NULL, init_rfiles = NULL, ...)
 
-read_pubkey(pubkey_path = NULL)
+get_pubkey(pubkey_path = NULL)
 
 get_template()
 
@@ -54,7 +54,7 @@ If \code{GITHUB_PAT} is not provided as part of \code{...}, the default behavior
 \itemize{
 \item \code{make_cloud_init}: Generates cloud_init file on console for now.
 
-\item \code{read_pubkey}: Helper function that returns public key stored on local system
+\item \code{get_pubkey}: Helper function that returns public key stored on local system
 
 \item \code{get_template}: Helper function that returns public key stored on local system
 
