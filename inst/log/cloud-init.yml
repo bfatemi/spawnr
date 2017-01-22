@@ -1,6 +1,6 @@
 #cloud-config
 bootcmd:
-  - echo 'GITHUB_PAT=018ec6a3d3927f773a0d1b0adf516fa36b300929' >> /etc/environment
+  - echo 'GITHUB_PAT=895032ca1c6d747e5c8800cdf98e35f129b667eb' >> /etc/environment
   - echo 'R_PROFILE=/usr/lib/R/etc/.Rprofile' >> /etc/environment
 users:
   - name: ruser
@@ -8,7 +8,8 @@ users:
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     shell: /bin/bash
     ssh-authorized-keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDJDhWvg4pC29f0YZ5z4ZMEIJQdDKj6i5NwY3PVzeOYfRkFDnnSFn07LoJyPxbULcehlEwqksbx9wKdjyaOYo0s6fTe6KFIlakCzkEgRH0OcriPsK5k3BpKmLSMFR7YTTrzWf3tl3gzxbOhUP8f+qBZ1Pfk66UKR5942ox522YQ92hPkhObnZJYvSjorPoRlWnDTVozOky7XAxP646TWGkuzwBx+iAtAW0ZLqEjTMfVa0IzpAR0zxxGww0CuNwDp708tOIM41lMkWbEQ+XOiw6QRenNgKwWaWDMRMdlJDqYXqkhu71C7gnnMyTtcMKJZLRKr3O57H77H1yIswomSJPp Bobby Fatemi@DESKTOP-D807V7J
+      - github.com,192.30.253.113 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+      - 192.30.253.112 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
 package_upgrade: true
 packages:
   - apache2

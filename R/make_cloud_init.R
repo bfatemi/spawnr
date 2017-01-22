@@ -20,6 +20,8 @@
 #' @param init_rfiles An optional character vector naming R files that should be run on the server to
 #'              setup the environment. See details for important information regarding parameter.
 #' @param ... Optional named arguments representing server env vars to set on boot
+#' @param console A boolean (default is false) to specify whether to print the output to console.
+#' Note this will happen if Rstudio is not detected regardless of the value of this paramater
 #' @return Prints cloud-init file on console to use with DigitalOceans web UI to launch server
 #'
 #' @import stringr
@@ -58,7 +60,7 @@ NULL
 
 #' @describeIn make_cloud_init Generates cloud_init file on console for now.
 #' @export
-make_cloud_init <- function(pubkey_path=NULL, usr=NULL, init_rfiles=NULL, ...){
+make_cloud_init <- function(pubkey_path=NULL, usr=NULL, init_rfiles=NULL, console=FALSE, ...){
   env.vars <- pryr::named_dots(...)
   if(is.null(usr))
     usr <- "ruser" # set username if null
@@ -130,17 +132,30 @@ make_cloud_init <- function(pubkey_path=NULL, usr=NULL, init_rfiles=NULL, ...){
   ###   - Integrate later with DO api
   merged <- unlist(lapply(1:length(chunks), function(i) do.call("[[", list(chunks, i))))
 
-  if(rstudioapi::isAvailable()){
-    if(!dir.exists("inst/log")){
+  if(rstudioapi::isAvailable() & !console){
+
+    # Store the last generated copy of the cloud-init file in a package directory 'log'
+    logdir <- system.file("log", package = "spawnr")
+    fname <- "/cloud-init.yml"
+    fpath <- paste0(logdir, fname)
+
+    if(!dir.exists(logdir)){
+
+      # create log dir if it doesnt exist (it should)
       dir.create("inst/log")
+    }else{
+
+      # create file if it doesnt exist
+      if(!file.exists(fpath)){
+        file.create(fpath)
+      }
     }
-    if(!file.exists("inst/log/cloud-init.yml")){
-      file.create("inst/log/cloud-init.yml")
-    }
-    writeLines(merged, "inst/log/cloud-init.yml")
-    rstudioapi::navigateToFile("inst/log/cloud-init.yml")
+    writeLines(merged, fpath)
+    rstudioapi::navigateToFile(fpath)
+    cat("\nGenerated cloud-init file located here:\n\n", fpath, "\n\n")
     return(TRUE)
   }
+  cat("\nRStudio api not available. Writing cloud-init file to console:\n\n")
   writeLines(merged)
   return(TRUE)
 }
@@ -149,15 +164,51 @@ make_cloud_init <- function(pubkey_path=NULL, usr=NULL, init_rfiles=NULL, ...){
 #' @describeIn make_cloud_init Helper function that returns public key stored on local system
 #' @export
 get_pubkey <- function(pubkey_path=NULL){
+
+  ## if path is not provided, attempt to construct it
   if(is.null(pubkey_path)){
     dr <- Sys.getenv("HOMEDRIVE")
     hp <- Sys.getenv("HOMEPATH")
-    pk <- "\\.ssh\\id_rsa.pub"
+
+    if(get_os() == "windows"){
+      pk <- ".ssh\\known_hosts"
+    }else{
+      pk <- ".ssh\\id_rsa.pub"
+    }
     pubkey_path <- paste0(dr, hp, pk)
+  }
+
+  tryCatch({
+    pubkey <- readLines(pubkey_path)
+  }, error=function(c){
+    stop("Issue reading public key. Check path and if wrong, provide pubkey via arg:\n", pubkey_path)
+  })
+
+  if(length(pubkey)==0)
+    stop("No saved public keys in file: ", pubkey_path)
+
+  ## If there is more than one, give user choice to select 1 or all
+  if(length(pubkey) > 1){
+    cat("\nSelect one or more public keys to initialize on the server:\n\n")
+    tmp <- str_c(paste0("\nEnter ", 1:length(pubkey), " For Key: "), "\n\n", pubkey, "\n")
+    tmp2 <- c(tmp, paste0("\nEnter ", length(pubkey)+1, " For ALL Keys"))
+    prmpt <- paste0(tmp2, collapse = "")
+    cat(prmpt)
+    response <- readline("Enter response: ")
+
+    # should catch all errors regarding invalid response
+    if(response == length(pubkey)+1)
+      return(pubkey)
+    else if(!response %in% 1:length(pubkey))
+      stop("Invalid response. Stopping code execution")
+
+    # Use selection to return the appropriate public key
     tryCatch({
-      return(readLines(pubkey_path))
+      # Manage errors due to invalid user response
+      ret <- pubkey[as.numeric(response)]
+      return(ret)
     }, error=function(c){
-      stop("Issue reading public key. Check path and if wrong, provide pubkey via arg:\n", pubkey_path)
+      stop("Error reading public key and selection. Aborting")
     })
   }
 }

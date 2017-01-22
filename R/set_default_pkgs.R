@@ -56,6 +56,7 @@ set_default_pkgs <- function(pkgs = NULL){
 }
 
 #' @describeIn set_default_pkgs helper function to lookup OS
+#' @export
 get_os <- function(){
   sysinf <- Sys.info()
   if (!is.null(sysinf)){
