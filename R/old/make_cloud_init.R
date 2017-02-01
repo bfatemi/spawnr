@@ -170,13 +170,16 @@ get_pubkey <- function(pubkey_path=NULL){
     dr <- Sys.getenv("HOMEDRIVE")
     hp <- Sys.getenv("HOMEPATH")
 
-    if(get_os() == "windows"){
-      pk <- ".ssh\\known_hosts"
-    }else{
+    pk <- ".ssh\\known_hosts"
+    if(get_os() != "windows")
       pk <- ".ssh\\id_rsa.pub"
-    }
     pubkey_path <- paste0(dr, hp, pk)
   }
+  if(!file.exists(pubkey_path)){
+    warning("Did not locate public key file. Provide path argument.", call. = FALSE)
+    return(NULL)
+  }
+
 
   tryCatch({
     pubkey <- readLines(pubkey_path)

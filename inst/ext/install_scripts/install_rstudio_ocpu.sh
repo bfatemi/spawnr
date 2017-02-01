@@ -5,3 +5,4 @@ sudo apt-get install -y postfix
 sudo apt-get install -y opencpu
 sudo apt-get install -y rstudio-server
 sudo rstudio-server restart
+sudo service opencpu start

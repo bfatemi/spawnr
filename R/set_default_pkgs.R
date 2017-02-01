@@ -55,20 +55,7 @@ set_default_pkgs <- function(pkgs = NULL){
   return(TRUE)
 }
 
-#' @describeIn set_default_pkgs helper function to lookup OS
-#' @export
-get_os <- function(){
-  sysinf <- Sys.info()
-  if (!is.null(sysinf)){
-    os <- sysinf['sysname']
-    if (os == 'Darwin')
-      os <- "osx"
-  } else {
-    os <- .Platform$OS.type
-    if (grepl("^darwin", R.version$os))
-      os <- "osx"
-    if (grepl("linux-gnu", R.version$os))
-      os <- "linux"
-  }
-  tolower(os)
-}
+
+
+
+
