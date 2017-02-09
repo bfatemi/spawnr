@@ -4,10 +4,10 @@
 \alias{connect_github}
 \title{Connect Server to Github}
 \usage{
-connect_github(personal_token = NULL)
+connect_github(ptoken = NULL)
 }
 \arguments{
-\item{personal_token}{An optional personal access token.
+\item{ptoken}{An optional personal access token.
 If not provided, will default to system var GITHUB_PAT}
 }
 \value{

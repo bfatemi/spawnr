@@ -1,36 +1,25 @@
-
-library(R6)
+#' Internal Cloud-Init Block Classes
+#'
+#' Classes used to construct each block of the total cloud init file.
+#'
+#' @name cc_block_classes
+NULL
 
 ## Save tab variables, just for clarity
 t   <- "  "
 tt  <- paste0(t, t, collapse = "")
 ttt <- paste0(t, t, t, collapse = "")
 
+# cc_block_classes block for boot -----------------------------------------
 
-# cloud_cmd <- function(param, value){
-#   paste0(param, ": ", value)
-# }
 
-get_os <- function(){
-  sysinf <- Sys.info()
-  if (!is.null(sysinf)){
-    os <- sysinf['sysname']
-    if (os == 'Darwin')
-      os <- "osx"
-  } else {
-    os <- .Platform$OS.type
-    if (grepl("^darwin", R.version$os))
-      os <- "osx"
-    if (grepl("linux-gnu", R.version$os))
-      os <- "linux"
-  }
-  tolower(os)
-}
-
-BOOTCMD <- R6Class(
+BOOTCMD <- R6::R6Class(
   classname = "bootcmd",
   public = list(
-    add = function(...) private$cmd <- c(private$cmd, do.call("quote", list(substitute(...)))),
+    add = function(...){
+      private$cmd <- c(private$cmd, do.call("quote", list(substitute(...))))
+      self$get_text()
+    },
     get_text = function(){
       if(length(private$cmd)==0) return(NULL)
       txt <- c("bootcmd:", paste0(t, "- ", private$cmd))
@@ -41,7 +30,53 @@ BOOTCMD <- R6Class(
   private = list(cmd = NULL)
 )
 
-USERS <- R6Class(
+
+# cc_block_classes block for powerstate -----------------------------------
+
+
+POWER_STATE <- R6::R6Class(
+  classname = "power_state",
+  public = list(
+    mode = "reboot",
+    message = "Bye Bye",
+    timeout = "30",
+    condition = "True",
+    get_text = function(){
+      txt <- c("power_state:",
+               paste0(t, "mode: ", self$mode),
+               paste0(t, "message: ", self$message),
+               paste0(t, "timeout: ", self$timeout),
+               paste0(t, "condition: ", self$condition))
+      return(txt)
+    }
+  )
+)
+
+
+
+# cc_block_classes block for run commands ---------------------------------
+
+
+RUNCMD <- R6::R6Class(
+  classname = "runcmd",
+  public = list(
+    add_cmd = function(...) private$cmd <- c(private$cmd, do.call("quote", list(substitute(...)))),
+    get_text = function(){
+      if(length(private$cmd)==0) return(NULL)
+      txt <- c("runcmd:", paste0(t, "- ", private$cmd))
+      return(txt)
+    },
+    get_cmds = function() private$cmd
+  ),
+  private = list(cmd = NULL)
+)
+
+
+
+# cc_block_classes block for userconfig -----------------------------------
+
+
+USERS <- R6::R6Class(
   classname = "users",
   public = list(
     name = "ruser",
@@ -49,11 +84,13 @@ USERS <- R6Class(
     sudo = "['ALL=(ALL) NOPASSWD:ALL']",
     shell = "/bin/bash",
     `ssh-authorized-keys` = NULL,
+
     add_ssh = function(path=NULL){
       self$`ssh-authorized-keys` <- get_pubkey(choice = 1)
       return(self)
     },
     initialize = function() self$add_ssh(),
+
     get_text = function(){
       ## check if ssh key exists, otherwise keep NULL for sub-block
       ssh_txt <- NULL
@@ -71,7 +108,12 @@ USERS <- R6Class(
   )
 )
 
-WRITE_FILES <- R6Class(
+
+
+# cc_block_classes block for files to write on server ---------------------
+
+
+WRITE_FILES <- R6::R6Class(
   classname = "write_files",
   public = list(
     server_files = NULL,
@@ -100,11 +142,14 @@ WRITE_FILES <- R6Class(
       self$server_files <- c(self$server_files, path)
     },
     # ensure any files in install_scripts is added by default
-    initialize = function(){
-      pdir <- system.file("ext", "copy_to_server", package = "spawnr")
-      local_dir <- paste0(pdir, "/")
-      files <- list.files(local_dir, full.names = TRUE)
-      if(length(files) == 0) return(NULL)
+    initialize = function(files = NULL){
+      if(is.null(files)){
+        pdir <- system.file("ext", "copy_to_server", package = "spawnr")
+        local_dir <- paste0(pdir, "/")
+        files <- list.files(local_dir, full.names = TRUE)
+      }
+      if(length(files) == 0)
+        return(NULL)
       lapply(files, self$add_server_file)
       return(self)
     },
@@ -134,41 +179,20 @@ WRITE_FILES <- R6Class(
   )
 )
 
-POWER_STATE <- R6Class(
-  classname = "power_state",
-  public = list(
-    mode = "reboot",
-    message = "Bye Bye",
-    timeout = "30",
-    condition = "True",
-    get_text = function(){
-      txt <- c("power_state:",
-               paste0(t, "mode: ", self$mode),
-               paste0(t, "message: ", self$message),
-               paste0(t, "timeout: ", self$timeout),
-               paste0(t, "condition: ", self$condition))
-      return(txt)
-    }
-  )
-)
 
-RUNCMD <- R6Class(
-  classname = "runcmd",
-  public = list(
-    add_cmd = function(...) private$cmd <- c(private$cmd, do.call("quote", list(substitute(...)))),
-    get_text = function(){
-      if(length(private$cmd)==0) return(NULL)
-      txt <- c("runcmd:", paste0(t, "- ", private$cmd))
-      return(txt)
-    },
-    get_cmds = function() private$cmd
-  ),
-  private = list(cmd = NULL)
-)
 
-PACKAGES <- R6Class(
+
+# cc_block_classes block for packages to install --------------------------
+
+
+PACKAGES <- R6::R6Class(
   classname = "packages",
   public = list(
+    initialize = function(pkgs=NULL){
+      if(!is.null(pkgs))
+        lapply(pkgs, self$add)
+      self$get_text()
+    },
     add = function(pkg) private$packages <- c(private$packages, pkg),
     get_text = function(){
       if(length(private$packages)==0) return(NULL)
@@ -181,7 +205,20 @@ PACKAGES <- R6Class(
 
 
 
-CLOUDCONFIG <- R6Class(
+# cc_block_classes block for package upgrade ------------------------------
+
+
+PKG_UPGRADE <- R6::R6Class(
+  classname = "package_upgrade",
+  public = list(get_text = function() "package_upgrade: true")
+)
+
+
+
+# cc_block_classes class to bundle all blocks and produce desired  --------
+
+
+CLOUDCONFIG <- R6::R6Class(
   classname = "cloud-config",
 
   public = list(
@@ -205,73 +242,40 @@ CLOUDCONFIG <- R6Class(
 
     list_blocks = function(){
       bnames <- names(CLOUDCONFIG$public_fields)
-      blks <- c(HEADER = private$header, sapply(bnames, function(i) do.call("$", list(self, i))$get_text()))
+      txt <- sapply(bnames, function(i){
+        blk <- do.call("$", list(self, i))
+        if(is.null(blk))
+          return(NULL)
+        blk$get_text()
+      })
+      blks <- c(HEADER = private$header, txt)
       return(blks)
     },
-    make_file = function(){
-      fpath <- paste0(system.file("log", package = "spawnr"), "/cloud_init.yml")
 
-      ## if rstudio is active, write to file and open up. Else write to console
-      if(rstudioapi::hasFun("navigateToFile")){
-        lines <- unlist(cc$list_blocks())
-        writeLines(lines, fpath)
-        rstudioapi::navigateToFile(fpath)
+    make_file = function(ll=NULL, gotofile=FALSE){
+      if(is.null(ll)){
+        lines <- unlist(self$list_blocks())
       }else{
-        writeLines(unlist(self$list_blocks()))
+        lines <- unlist(ll)
       }
 
+      fpath <- paste0(system.file("log", package = "spawnr"), "/cloud_init.yml")
+      lines <- unlist(self$list_blocks())
+      writeLines(lines, fpath)
+
+      ## if rstudio is active, write to file and open up. Else write to console
+      if(gotofile){
+        if(rstudioapi::hasFun("navigateToFile")){
+          rstudioapi::navigateToFile(fpath)
+        }else{
+          writeLines(unlist(self$list_blocks()))
+        }
+      }
+      return(fpath)
     }
   ),
   private = list(header = "#cloud-config")
 )
 
-get_os <- function(){
-  sysinf <- Sys.info()
-  if (!is.null(sysinf)){
-    os <- sysinf['sysname']
-    if (os == 'Darwin')
-      os <- "osx"
-  } else {
-    os <- .Platform$OS.type
-    if (grepl("^darwin", R.version$os))
-      os <- "osx"
-    if (grepl("linux-gnu", R.version$os))
-      os <- "linux"
-  }
-  tolower(os)
-}
 
-
-## Create brand new cloud-config file
-cc <- CLOUDCONFIG$new()
-cc$make_file()
-## Add boot commands
-cc$BOOTCMD$add("echo 'GITHUB_PAT=018ec6a3d3927f773a0d1b0adf516fa36b300929' >> /etc/environment")
-cc$BOOTCMD$add("echo 'R_PROFILE=/usr/lib/R/etc/.Rprofile' >> /etc/environment")
-
-# Add and R file to copy to the server after its configured
-fpath <- system.file("ext", "install_scripts", "init_server.R", package = "spawnr")
-cc$WRITE_FILES$add_server_file(fpath)
-
-# add packages
-cc$PACKAGES$add("apache2")
-cc$PACKAGES$add("build-essential")
-cc$PACKAGES$add("libxml2-dev")
-cc$PACKAGES$add("libcurl4-openssl-dev")
-cc$PACKAGES$add("libprotobuf-dev")
-cc$PACKAGES$add("protobuf-compiler")
-
-## add commands to runcmd
-cc$RUNCMD$add_cmd('echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | sudo tee -a /etc/apt/sources.list')
-cc$RUNCMD$add_cmd("gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9")
-cc$RUNCMD$add_cmd("gpg -a --export E084DAB9 | sudo apt-key add -")
-cc$RUNCMD$add_cmd("sudo add-apt-repository -y ppa:opencpu/opencpu-1.6")
-cc$RUNCMD$add_cmd("sudo apt-get update -y")
-cc$RUNCMD$add_cmd("sudo apt-get install -y r-base r-base-dev libssl-dev libcurl4-gnutls-dev libssh2-1-dev")
-cc$RUNCMD$add_cmd("chmod +x /setup_rstudio_ocpu.sh")
-cc$RUNCMD$add_cmd("sudo /setup_rstudio_ocpu.sh")
-cc$RUNCMD$add_cmd("Rscript --vanilla /init_server.R > R_init_server_log")
-
-
-cc$make_file()
 

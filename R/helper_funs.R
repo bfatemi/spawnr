@@ -57,61 +57,43 @@
 #' }
 #' @name helper_funs
 NULL
+## Get public key path and read if it exists
+
 
 #' @describeIn helper_funs Helper function that returns public key stored on local system
 #' @export
-get_pubkey <- function(pubkey_path=NULL){
+get_pubkey <- function(pubkey_path=NULL, choice = NULL){
 
   ## if path is not provided, attempt to construct it
-  if(is.null(pubkey_path)){
-    dr <- Sys.getenv("HOMEDRIVE")
-    hp <- Sys.getenv("HOMEPATH")
+  if(is.null(pubkey_path))
+    pubkey_path <- str_c(Sys.getenv("HOMEDRIVE"), Sys.getenv("HOMEPATH"), ".ssh\\", "known_hosts")
 
-    pk <- "\\.ssh\\known_hosts"
-    if(get_os() == "windows")
-      pk <- "\\.ssh\\id_rsa.pub"
-    pubkey_path <- paste0(dr, hp, pk)
-  }
-  if(!file.exists(pubkey_path)){
-    warning("Did not locate public key file. Provide path argument.", call. = FALSE)
-    return(NULL)
-  }
+  if(!file.exists(pubkey_path))
+    stop("No public keys found at path: ", pkey_path)
 
-
-  tryCatch({
-    pubkey <- readLines(pubkey_path)
-  }, error=function(c){
-    stop("Issue reading public key. Check path and if wrong, provide pubkey via arg:\n", pubkey_path)
-  })
-
-  if(length(pubkey)==0)
+  # read key and clean
+  ll_pkey <- lapply(readLines(pubkey_path), str_extract, pattern="(?=ssh\\-rsa).+")
+  if(length(ll_pkey)==0)
     stop("No saved public keys in file: ", pubkey_path)
 
   ## If there is more than one, give user choice to select 1 or all
-  if(length(pubkey) > 1){
-    cat("\nSelect one or more public keys to initialize on the server:\n\n")
-    tmp <- str_c(paste0("\nEnter ", 1:length(pubkey), " For Key: "), "\n\n", pubkey, "\n")
-    tmp2 <- c(tmp, paste0("\nEnter ", length(pubkey)+1, " For ALL Keys"))
-    prmpt <- paste0(tmp2, collapse = "")
-    cat(prmpt)
-    response <- readline("Enter response: ")
+  if(length(ll_pkey) > 1){
+    if(is.null(choice)){
+      cat("\nSelect one or more public keys to initialize on the server:\n\n")
+      tmp <- str_c(paste0("\nEnter ", 1:length(ll_pkey), " For Key: "), "\n\n", ll_pkey, "\n")
+      tmp2 <- c(tmp, paste0("\nEnter ", length(ll_pkey)+1, " For ALL Keys"))
+      prmpt <- paste0(tmp2, collapse = "")
+      cat(prmpt)
+      response <- readline("Enter response: ")
 
-    # should catch all errors regarding invalid response
-    if(response == length(pubkey)+1)
-      return(pubkey)
-    else if(!response %in% 1:length(pubkey))
-      stop("Invalid response. Stopping code execution")
-
-    # Use selection to return the appropriate public key
-    tryCatch({
-      # Manage errors due to invalid user response
-      ret <- pubkey[as.numeric(response)]
-      return(ret)
-    }, error=function(c){
-      stop("Error reading public key and selection. Aborting")
-    })
+      # should catch all errors regarding invalid response
+      if(response == length(ll_pkey)+1)
+        return(ll_pkey)
+      return(ll_pkey[[as.numeric(response)]])
+    }
+    return(ll_pkey[[choice]])
   }
-  return(pubkey)
+  return(ll_pkey)
 }
 
 
