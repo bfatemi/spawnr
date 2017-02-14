@@ -17,4 +17,3 @@ Boolean
 Function to connect to github via personal access token, explicitly
 provided or through use of environmental variable \code{GITHUB_PAT}.
 }
-

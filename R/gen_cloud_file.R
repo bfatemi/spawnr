@@ -2,7 +2,7 @@
 #'
 #' Functions to generate the cloud-config file that is used to launch single/multi cluster R nodes in the cloud.
 #'
-#' @describIn gen_cloud_config for complete RStudio server environment and opencpu server.
+#' @describeIn gen_cloud_config for complete RStudio server environment and opencpu server.
 #' @export
 cc_r <- function() {
     cc <- CLOUDCONFIG$new()
@@ -14,7 +14,7 @@ cc_r <- function() {
     return(fpath)
 }
 
-#' @describIn gen_cloud_config for complete RStudio server environment and opencpu server.
+#' @describeIn gen_cloud_config for complete RStudio server environment and opencpu server.
 #' @export
 cc_rstudio_server <- function() {
     cc <- CLOUDCONFIG$new()

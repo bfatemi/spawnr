@@ -6,4 +6,3 @@
 \description{
 Classes used to construct each block of the total cloud init file.
 }
-

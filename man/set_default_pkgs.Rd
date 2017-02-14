@@ -15,4 +15,3 @@ boolean
 \description{
 Function to insert line to initialize default packages automatically when R starts.
 }
-
