@@ -3,7 +3,6 @@ library(rdigitalocean)
 library(ninjar)
 
 
-
 ## Create brand new cloud-config file
 cc_r <- function(){
   cc <- CLOUDCONFIG$new()

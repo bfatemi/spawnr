@@ -4,7 +4,9 @@
 #'
 #' @param pkgs character vector of package names to start with R
 #'
-#' @return boolean
+#' @importFrom stringr str_c
+#' @importFrom utils installed.packages
+#'
 #' @export
 set_default_pkgs <- function(pkgs = NULL){
   # Keep the current default packages
@@ -31,7 +33,7 @@ set_default_pkgs <- function(pkgs = NULL){
   system(paste0("chmod -R 777 ", outPath))
 
   # Ignore if not installed OR already loaded (i.e. already a default package)
-  ind <- which(pkgs %in% row.names(installed.packages()))
+  ind <- which(pkgs %in% row.names(utils::installed.packages()))
   if(length(ind) == 0)
     return(FALSE)
 

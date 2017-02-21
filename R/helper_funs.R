@@ -1,63 +1,16 @@
-#' Generate Cloud-Init File
+#' Helper Functions
 #'
-#' Function to generate a cloud-init file that can be used along with the digitalocean API
-#' to fully launch and depeloy a full scale R environment. This function also references
-#' files within this package that can be customized. These files are run on init, and include
-#' an R script to install basic packages, and another file that can contain arbitrary code to run.
-#'
-#' @details
-#' If \code{init_rfiles} is being provided, keep the following in mind:
-#'    - Should be one or more filenames only
-#'    - The files should be built with the package and placed in inst/ext/install_scripts
-#'    - Any additional files required by the script when it's running on the server should be here: inst/ext/install_scripts/local
-#'
-#' If \code{usr} is not provided, default username is 'ruser', and password is not set (for now)
-#'
-#' If \code{GITHUB_PAT} is not provided as part of \code{...}, the default behavior is to use Sys.getenv.
+#' Read in template cloud config or get public key
 #'
 #' @param pubkey_path Path to .ssh file in the system that has entries for the public key
-#' @param usr A string of length one naming the user to create on the server at launch. Defaults to 'ruser'
-#' @param init_rfiles An optional character vector naming R files that should be run on the server to
-#'              setup the environment. See details for important information regarding parameter.
-#' @param ... Optional named arguments representing server env vars to set on boot
-#' @param console A boolean (default is false) to specify whether to print the output to console.
-#' Note this will happen if Rstudio is not detected regardless of the value of this paramater
-#' @return Prints cloud-init file on console to use with DigitalOceans web UI to launch server
+#' @param choice TBD
 #'
-#' @import stringr
 #' @import data.table
-#' @import easydata
-#' @import utils
-#' @importFrom pryr named_dots
-#' @examples
-#' \dontrun{
-#' ## Not tested for systems other than windows
+#' @importFrom easydata split_by_index
+#' @importFrom stringr str_extract str_detect str_c
 #'
-#' # To ensure public key is correct, you can run this to see:
-#' read_pubkey()
-#'
-#' # otherwise, the following function call will print the cloud init file on console
-#' make_cloud_init()
-#'
-#' # Create cloud init file
-#' pat <- "[PLACEHOLDER]"
-#' rfile <- "init_server.R"
-#' make_cloud_init(GITHUB_PAT = pat, init_rfiles = rfile)
-#'
-#'
-#' ## DEVELOPMENT - INTERNAL USE
-#'
-#' # To complete remove write files chunk pass NULL to get_wfchunk. To instruct
-#' # the cloud-init script to create a blank file on the server, pass in as an argument
-#' # a name of a file that does not exist in the inst/install_scripts directory of the
-#' # local package
-#'
-#' # get_wfchunk(NULL) # makes wf chunk NULL
-#' # get_wfchunk("BLAH") # create empty file on server
-#' }
 #' @name helper_funs
 NULL
-## Get public key path and read if it exists
 
 
 #' @describeIn helper_funs Helper function that returns public key stored on local system
@@ -66,13 +19,13 @@ get_pubkey <- function(pubkey_path=NULL, choice = NULL){
 
   ## if path is not provided, attempt to construct it
   if(is.null(pubkey_path))
-    pubkey_path <- str_c(Sys.getenv("HOMEDRIVE"), Sys.getenv("HOMEPATH"), ".ssh\\", "known_hosts")
+    pubkey_path <- stringr::str_c(Sys.getenv("HOMEDRIVE"), Sys.getenv("HOMEPATH"), "\\.ssh\\", "known_hosts")
 
   if(!file.exists(pubkey_path))
-    stop("No public keys found at path: ", pkey_path)
+    stop("No public keys found at path: ", pubkey_path)
 
   # read key and clean
-  ll_pkey <- lapply(readLines(pubkey_path), str_extract, pattern="(?=ssh\\-rsa).+")
+  ll_pkey <- lapply(readLines(pubkey_path), stringr::str_extract, pattern="(?=ssh\\-rsa).+")
   if(length(ll_pkey)==0)
     stop("No saved public keys in file: ", pubkey_path)
 

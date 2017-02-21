@@ -11,16 +11,12 @@ LazyData: true
 RoxygenNote: 6.0.1
 URL: https://github.com/bfatemi/spawnr
 BugReports: https://github.com/bfatemi/spawnr/issues
-Imports: data.table,
+Imports: 
+    data.table,
     stringr,
-    stats,
+    yaml,
     httr,
-    pryr,
-    easydata,
-    shiny,
-    miniUI,
-    rstudioapi,
-    jsonlite,
-    R6
+    stats,
+    easydata
 Remotes:
     bfatemi/easydata

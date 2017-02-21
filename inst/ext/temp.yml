@@ -1,0 +1,24 @@
+#cloud-config
+bootcmd:
+
+users:
+  - name: ruser
+    groups: sudo
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash
+    ssh-authorized-keys:
+
+package_upgrade: true
+packages:
+
+write_files:
+  - path:
+    content: |
+
+runcmd:
+
+power_state:
+  - mode: reboot
+    message: Bye Bye
+    timeout: 30
+    condition: True

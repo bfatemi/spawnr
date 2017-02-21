@@ -7,11 +7,7 @@
 connect_github(ptoken = NULL)
 }
 \arguments{
-\item{ptoken}{An optional personal access token.
-If not provided, will default to system var GITHUB_PAT}
-}
-\value{
-Boolean
+\item{ptoken}{An optional personal access token. If not provided, will default to system var GITHUB_PAT}
 }
 \description{
 Function to connect to github via personal access token, explicitly

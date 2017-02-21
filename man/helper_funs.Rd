@@ -5,7 +5,7 @@
 \alias{get_pubkey}
 \alias{get_template}
 \alias{get_os}
-\title{Generate Cloud-Init File}
+\title{Helper Functions}
 \usage{
 get_pubkey(pubkey_path = NULL, choice = NULL)
 
@@ -16,34 +16,10 @@ get_os()
 \arguments{
 \item{pubkey_path}{Path to .ssh file in the system that has entries for the public key}
 
-\item{usr}{A string of length one naming the user to create on the server at launch. Defaults to 'ruser'}
-
-\item{init_rfiles}{An optional character vector naming R files that should be run on the server to
-setup the environment. See details for important information regarding parameter.}
-
-\item{...}{Optional named arguments representing server env vars to set on boot}
-
-\item{console}{A boolean (default is false) to specify whether to print the output to console.
-Note this will happen if Rstudio is not detected regardless of the value of this paramater}
-}
-\value{
-Prints cloud-init file on console to use with DigitalOceans web UI to launch server
+\item{choice}{TBD}
 }
 \description{
-Function to generate a cloud-init file that can be used along with the digitalocean API
-to fully launch and depeloy a full scale R environment. This function also references
-files within this package that can be customized. These files are run on init, and include
-an R script to install basic packages, and another file that can contain arbitrary code to run.
-}
-\details{
-If \code{init_rfiles} is being provided, keep the following in mind:
-   - Should be one or more filenames only
-   - The files should be built with the package and placed in inst/ext/install_scripts
-   - Any additional files required by the script when it's running on the server should be here: inst/ext/install_scripts/local
-
-If \code{usr} is not provided, default username is 'ruser', and password is not set (for now)
-
-If \code{GITHUB_PAT} is not provided as part of \code{...}, the default behavior is to use Sys.getenv.
+Read in template cloud config or get public key
 }
 \section{Functions}{
 \itemize{
@@ -54,30 +30,3 @@ If \code{GITHUB_PAT} is not provided as part of \code{...}, the default behavior
 \item \code{get_os}: helper function to lookup OS
 }}
 
-\examples{
-\dontrun{
-## Not tested for systems other than windows
-
-# To ensure public key is correct, you can run this to see:
-read_pubkey()
-
-# otherwise, the following function call will print the cloud init file on console
-make_cloud_init()
-
-# Create cloud init file
-pat <- "[PLACEHOLDER]"
-rfile <- "init_server.R"
-make_cloud_init(GITHUB_PAT = pat, init_rfiles = rfile)
-
-
-## DEVELOPMENT - INTERNAL USE
-
-# To complete remove write files chunk pass NULL to get_wfchunk. To instruct
-# the cloud-init script to create a blank file on the server, pass in as an argument
-# a name of a file that does not exist in the inst/install_scripts directory of the
-# local package
-
-# get_wfchunk(NULL) # makes wf chunk NULL
-# get_wfchunk("BLAH") # create empty file on server
-}
-}

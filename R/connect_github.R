@@ -3,17 +3,15 @@
 #' Function to connect to github via personal access token, explicitly
 #' provided or through use of environmental variable \code{GITHUB_PAT}.
 #'
-#' @param ptoken An optional personal access token.
-#' If not provided, will default to system var GITHUB_PAT
-#'
-#' @return Boolean
+#' @param ptoken An optional personal access token. If not provided, will default to system var GITHUB_PAT
 #'
 #' @importFrom stats runif
-#' @import httr
+#' @importFrom httr POST stop_for_status status_code
+#'
 #' @export
 connect_github <- function(ptoken=NULL){
   if(is.null(ptoken))
-    ptoken <- "6d0fb3a8768dc35bf91b6c9fc0a1a44e99816bf7"#runlock::gh_token()
+    ptoken <- Sys.getenv("GITHUB_PAT")
 
   pubkey <- get_pubkey(choice = 1)
 
@@ -27,7 +25,7 @@ connect_github <- function(ptoken=NULL){
     warning("key already in use")
     return(TRUE)
   }
-  stop_for_status(r)
+  httr::stop_for_status(r)
   return(TRUE)
 }
 

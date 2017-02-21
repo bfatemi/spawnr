@@ -1,6 +1,3 @@
-
-library(R6)
-
 ## Save tab variables, just for clarity
 t   <- "  "
 tt  <- paste0(t, t, collapse = "")

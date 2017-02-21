@@ -7,8 +7,8 @@ NULL
 
 ## Save tab variables, just for clarity
 t   <- "  "
-tt  <- paste0(t, t, collapse = "")
-ttt <- paste0(t, t, t, collapse = "")
+tt  <- paste0("  ", "  ", collapse = "")
+ttt <- paste0("  ", "  ", "  ", collapse = "")
 
 # cc_block_classes block for boot -----------------------------------------
 
@@ -43,10 +43,10 @@ POWER_STATE <- R6::R6Class(
     condition = "True",
     get_text = function(){
       txt <- c("power_state:",
-               paste0(t, "mode: ", self$mode),
-               paste0(t, "message: ", self$message),
-               paste0(t, "timeout: ", self$timeout),
-               paste0(t, "condition: ", self$condition))
+               paste0("  ", "mode: ", self$mode),
+               paste0("  ", "message: ", self$message),
+               paste0("  ", "timeout: ", self$timeout),
+               paste0("  ", "condition: ", self$condition))
       return(txt)
     }
   )
@@ -259,7 +259,12 @@ CLOUDCONFIG <- R6::R6Class(
         lines <- unlist(ll)
       }
 
-      fpath <- paste0(system.file("log", package = "spawnr"), "/cloud_init.yml")
+      fpath <- system.file("log", package = "spawnr")
+      if(fpath == ""){
+        fpath <- paste0(system.file(package = "spawnr"), "/log")
+        dir.create(fpath)
+      }
+      fpath <- paste0(fpath, "/cloud_init.yml")
       lines <- unlist(self$list_blocks())
       writeLines(lines, fpath)
 

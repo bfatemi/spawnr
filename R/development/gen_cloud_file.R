@@ -18,7 +18,7 @@ cc_r <- function() {
 #' @export
 cc_rstudio_server <- function() {
     cc <- CLOUDCONFIG$new()
-    pat <- runlock::gh_token()
+    pat <- Sys.getenv("GITHUB_PAT")
     txt <- paste0("echo 'GITHUB_PAT=", pat, "' >> /etc/environment")
     do.call(cc$BOOTCMD$add, list(txt))
     cc$BOOTCMD$add("echo 'R_PROFILE=/usr/lib/R/etc/.Rprofile' >> /etc/environment")
